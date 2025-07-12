@@ -16,7 +16,7 @@ from listings.serializers import (
 )
 
 # Import the send_payment_confirmation_email task/function
-from listings.tasks import send_payment_confirmation_email
+from listings.tasks import send_booking_confirmation_email, send_payment_confirmation_email
 
 class PropertyViewSet(viewsets.ModelViewSet):
     queryset = Property.objects.all()
@@ -24,7 +24,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
 class BookingViewSet(viewsets.ModelViewSet):
     queryset = Booking.objects.all()
     serializer_class = BookingSerializer
-
+    def perform_create(self, serializer):
+        booking = serializer.save()
+        user_email = booking.user.email
+        send_booking_confirmation_email.delay(user_email, booking.id)
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
